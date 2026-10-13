@@ -1,0 +1,76 @@
+[gd_scene format=3 uid="uid://c3rdgd3xirpbf"]
+
+[ext_resource type="Script" uid="uid://daabpjdpo5l7p" path="res://wayfinders/base/player/ui/InventorySlotUI.gd" id="1_mn58r"]
+[ext_resource type="Texture2D" uid="uid://dvnovr1wenrbo" path="res://wayfinders/base/player/ui/pin.png" id="2_vggnq"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fa6ko"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+shadow_size = 1
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lc2el"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.6811861, 0.6970466, 0.83847636, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+shadow_size = 1
+
+[node name="InventorySlotUI" type="PanelContainer" unique_id=1371072587]
+custom_minimum_size = Vector2(64, 64)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -32.0
+offset_top = -32.0
+offset_right = 32.0
+offset_bottom = 32.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_mn58r")
+
+[node name="SelectionBorder" type="Panel" parent="." unique_id=376824707]
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_fa6ko")
+
+[node name="DropPreviewBorder" type="Panel" parent="." unique_id=242326166]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_lc2el")
+
+[node name="Icon" type="TextureRect" parent="." unique_id=1811805111]
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="QuantityLabel" type="Label" parent="." unique_id=2084315228]
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="PinIndicator" type="TextureRect" parent="." unique_id=183845316]
+custom_minimum_size = Vector2(10, 0)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+texture = ExtResource("2_vggnq")
+expand_mode = 5
+stretch_mode = 4

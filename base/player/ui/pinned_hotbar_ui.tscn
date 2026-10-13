@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://cyyes8bpgnhjb"]
+
+[ext_resource type="Script" uid="uid://batuwln5k7r8g" path="res://wayfinders/base/player/ui/PinnedHotbarUI.gd" id="1_e8s01"]
+
+[node name="PinnedHotbarUI" type="Control" unique_id=671959399]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+script = ExtResource("1_e8s01")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=2006909184]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HotbarGrid" type="HBoxContainer" parent="VBoxContainer" unique_id=463886155]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+
+[node name="SelectedItemLabel" type="Label" parent="VBoxContainer" unique_id=1181145025]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1

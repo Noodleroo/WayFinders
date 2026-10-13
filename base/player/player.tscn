@@ -1,0 +1,84 @@
+[gd_scene format=3 uid="uid://cuf2a3m2bpuwg"]
+
+[ext_resource type="Script" uid="uid://cedaclpydvjxb" path="res://wayfinders/base/player/Player.gd" id="1_3jeju"]
+[ext_resource type="Script" uid="uid://dd4y1a7sgarye" path="res://wayfinders/base/player/CameraRig.gd" id="2_4qul1"]
+[ext_resource type="PackedScene" uid="uid://bcejgfb3ymjfs" path="res://wayfinders/base/player/ui/inventory_ui.tscn" id="2_a8oqt"]
+[ext_resource type="Script" uid="uid://dn6tbpggonsev" path="res://wayfinders/base/player/PlayerName.gd" id="3_a8oqt"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_fa6ko"]
+margin = 0.3
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_fa6ko"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_fa6ko"]
+
+[sub_resource type="FontFile" id="FontFile_i3pqv"]
+subpixel_positioning = 0
+msdf_pixel_range = 14
+msdf_size = 128
+cache/0/variation_coordinates = {}
+cache/0/face_index = 0
+cache/0/embolden = 0.0
+cache/0/transform = Transform2D(1, 0, 0, 1, 0, 0)
+cache/0/spacing_top = 0
+cache/0/spacing_bottom = 0
+cache/0/spacing_space = 0
+cache/0/spacing_glyph = 0
+cache/0/baseline_offset = 0.0
+cache/0/16/0/ascent = 0.0
+cache/0/16/0/descent = 0.0
+cache/0/16/0/underline_position = 0.0
+cache/0/16/0/underline_thickness = 0.0
+cache/0/16/0/scale = 1.0
+cache/0/64/0/ascent = 0.0
+cache/0/64/0/descent = 0.0
+cache/0/64/0/underline_position = 0.0
+cache/0/64/0/underline_thickness = 0.0
+cache/0/64/0/scale = 1.0
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_i3pqv"]
+
+[node name="Player" type="CharacterBody3D" unique_id=1574273862 node_paths=PackedStringArray("camera_rig")]
+script = ExtResource("1_3jeju")
+camera_rig = NodePath("CameraRig")
+inventory_ui_scene = ExtResource("2_a8oqt")
+
+[node name="CameraRig" type="Node3D" parent="." unique_id=1517678052]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3142115, 0)
+script = ExtResource("2_4qul1")
+pivot_height = 0.0
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraRig" unique_id=215842616]
+transform = Transform3D(1, 0, 0, 0, 0.98132485, 0.19235827, 0, -0.19235827, 0.98132485, 0, 0.2602265, 0)
+shape = SubResource("SphereShape3D_fa6ko")
+spring_length = 5.0
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D" unique_id=779413404]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=890300543]
+unique_name_in_owner = true
+shape = SubResource("CapsuleShape3D_fa6ko")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1911125411]
+unique_name_in_owner = true
+mesh = SubResource("CapsuleMesh_fa6ko")
+
+[node name="CoyoteCheck" type="RayCast3D" parent="." unique_id=2088885281]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.8943864, 0)
+target_position = Vector3(0, -0.5, 0)
+
+[node name="CeilingCheck" type="RayCast3D" parent="." unique_id=1769056267]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9859383, 0)
+target_position = Vector3(0, 0.5, 0)
+
+[node name="Label3D" type="Label3D" parent="." unique_id=964064427]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6417475, 0)
+billboard = 2
+no_depth_test = true
+font = SubResource("FontFile_i3pqv")
+font_size = 64
+outline_size = 14
+script = ExtResource("3_a8oqt")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1704017727]
+replication_config = SubResource("SceneReplicationConfig_i3pqv")
