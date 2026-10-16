@@ -4,6 +4,8 @@
 [ext_resource type="Script" uid="uid://dd4y1a7sgarye" path="res://wayfinders/base/player/CameraRig.gd" id="2_4qul1"]
 [ext_resource type="PackedScene" uid="uid://bcejgfb3ymjfs" path="res://wayfinders/base/player/ui/inventory_ui.tscn" id="2_a8oqt"]
 [ext_resource type="Script" uid="uid://dn6tbpggonsev" path="res://wayfinders/base/player/PlayerName.gd" id="3_a8oqt"]
+[ext_resource type="Script" uid="uid://cbkoyko8tnjce" path="res://wayfinders/base/player/PlayerInteractor.gd" id="4_a8oqt"]
+[ext_resource type="Script" uid="uid://ckkxe7fqh215j" path="res://wayfinders/base/player/PlayerInteractable.gd" id="6_sqyqi"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_fa6ko"]
 margin = 0.3
@@ -38,9 +40,12 @@ cache/0/64/0/scale = 1.0
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_i3pqv"]
 
-[node name="Player" type="CharacterBody3D" unique_id=1574273862 node_paths=PackedStringArray("camera_rig")]
+[sub_resource type="SphereShape3D" id="SphereShape3D_sqyqi"]
+radius = 1.8265917
+
+[node name="Player" type="CharacterBody3D" unique_id=1574273862]
+process_mode = 3
 script = ExtResource("1_3jeju")
-camera_rig = NodePath("CameraRig")
 inventory_ui_scene = ExtResource("2_a8oqt")
 
 [node name="CameraRig" type="Node3D" parent="." unique_id=1517678052]
@@ -50,10 +55,20 @@ pivot_height = 0.0
 
 [node name="SpringArm3D" type="SpringArm3D" parent="CameraRig" unique_id=215842616]
 transform = Transform3D(1, 0, 0, 0, 0.98132485, 0.19235827, 0, -0.19235827, 0.98132485, 0, 0.2602265, 0)
+collision_mask = 3
 shape = SubResource("SphereShape3D_fa6ko")
 spring_length = 5.0
 
 [node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D" unique_id=779413404]
+
+[node name="InteractionRay" type="RayCast3D" parent="CameraRig/SpringArm3D/Camera3D" unique_id=1886277752]
+transform = Transform3D(1, 0, 0, 0, 1.0000002, 0, 0, 0, 1.0000002, 0, 0, -0.5)
+target_position = Vector3(0, 0, -3)
+collision_mask = 5
+collide_with_areas = true
+debug_shape_custom_color = Color(0.7107798, 0.54975766, 0.7894732, 1)
+debug_shape_thickness = 4
+script = ExtResource("4_a8oqt")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=890300543]
 unique_name_in_owner = true
@@ -82,3 +97,16 @@ script = ExtResource("3_a8oqt")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1704017727]
 replication_config = SubResource("SceneReplicationConfig_i3pqv")
+
+[node name="ItemHoldPoint" type="Node3D" parent="." unique_id=2046964750]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.37640762, 0, -0.39822268)
+
+[node name="ActiveItemMesh" type="MeshInstance3D" parent="ItemHoldPoint" unique_id=206505072]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=784934119]
+
+[node name="PlayerInteractArea" type="Area3D" parent="." unique_id=205739930]
+script = ExtResource("6_sqyqi")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PlayerInteractArea" unique_id=1644759436]
+shape = SubResource("SphereShape3D_sqyqi")

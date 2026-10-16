@@ -58,6 +58,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_lc2el")
 
 [node name="Icon" type="TextureRect" parent="." unique_id=1811805111]
 layout_mode = 2
+mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 

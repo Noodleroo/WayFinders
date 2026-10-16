@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://cathu1c3g3lk0"]
+
+[ext_resource type="Script" uid="uid://skypipp7h8gm" path="res://wayfinders/base/world/TerrainGenerator.gd" id="1_mx74c"]
+[ext_resource type="PackedScene" uid="uid://cuf2a3m2bpuwg" path="res://wayfinders/base/player/player.tscn" id="2_n7aif"]
+[ext_resource type="PackedScene" uid="uid://bta2olfiyoefk" path="res://resources/wayfinders/items/choppable_block.tscn" id="2_ywllg"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_wc7r7"]
+noise_type = 3
+seed = -784677887
+frequency = 0.015
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_7468f"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_y7rda"]
+sky_material = SubResource("ProceduralSkyMaterial_7468f")
+
+[sub_resource type="Environment" id="Environment_vg2ls"]
+background_mode = 2
+sky = SubResource("Sky_y7rda")
+glow_enabled = true
+
+[sub_resource type="Curve3D" id="Curve3D_i3pqv"]
+
+[node name="TerrainGenerator" type="Node3D" unique_id=2072600484]
+script = ExtResource("1_mx74c")
+noise = SubResource("FastNoiseLite_wc7r7")
+generate_terrain_button = true
+choppable_box_scene = ExtResource("2_ywllg")
+scenery_density = 0.02
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1674460695]
+environment = SubResource("Environment_vg2ls")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=262715354]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="TerrainMesh" type="MeshInstance3D" parent="." unique_id=2012809545]
+layers = 2
+
+[node name="RiverPath" type="Path3D" parent="." unique_id=29437344]
+curve = SubResource("Curve3D_i3pqv")
+
+[node name="Player" parent="." unique_id=1574273862 instance=ExtResource("2_n7aif")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 82.92441, 28.132557, 39.867)

@@ -1,26 +1,22 @@
+# res://scripts/inventory/inventory_save_system.gd
 class_name InventorySaveSystem
 extends Node
 
 const SAVE_PATH: String = "user://inventory_save.json"
 
-# Dictionary database matching Item IDs to their Resource paths
-static var item_database: Dictionary = {
-	"wood": "res://resources/items/wood.tres",
-	"stone": "res://resources/items/stone.tres",
-	"relic_ash": "res://resources/items/relic_ash.tres",
-	"iron_sword": "res://resources/items/iron_sword.tres"
-}
-
 
 static func save_inventory(inventory: InventoryData, file_path: String = SAVE_PATH) -> bool:
+	if inventory == null:
+		return false
+
 	var save_data: Array = []
 
 	for slot in inventory.slot_datas:
-		if slot and slot.item_data:
+		if slot and slot.item:
 			save_data.append({
-				"item_id": slot.item_data.id,
+				"item_id": slot.item.id,
 				"quantity": slot.quantity,
-				"custom_attributes": slot.item_data.custom_attributes
+				"current_durability": slot.current_durability
 			})
 		else:
 			save_data.append(null)
@@ -36,7 +32,9 @@ static func save_inventory(inventory: InventoryData, file_path: String = SAVE_PA
 	print("Inventory saved successfully to: ", file_path)
 	return true
 
+
 static func load_inventory(size: int = 20, file_path: String = SAVE_PATH) -> InventoryData:
+	# Instantiate with 0 args, then size using _init() parameter
 	var inventory = InventoryData.new(size)
 
 	if not FileAccess.file_exists(file_path):
@@ -58,25 +56,25 @@ static func load_inventory(size: int = 20, file_path: String = SAVE_PATH) -> Inv
 		push_error("Failed to parse inventory JSON save file.")
 		return inventory
 
-	var loaded_slots: Array = json.data
+	var loaded_slots = json.data
+	if not loaded_slots is Array:
+		return inventory
 
 	for i in range(min(loaded_slots.size(), inventory.slot_datas.size())):
 		var slot_info = loaded_slots[i]
 		if slot_info != null and slot_info is Dictionary:
 			var item_id: String = slot_info.get("item_id", "")
 			var quantity: int = slot_info.get("quantity", 1)
+			var durability: int = slot_info.get("current_durability", -1)
 
-			if item_database.has(item_id):
-				var item_res_path = item_database[item_id]
-				if ResourceLoader.exists(item_res_path):
-					var loaded_item: ItemData = load(item_res_path).duplicate()
-					
-					# Load custom attribute overrides
-					if slot_info.has("custom_attributes"):
-						loaded_item.custom_attributes = slot_info["custom_attributes"]
-
-					inventory.slot_datas[i].item_data = loaded_item
-					inventory.slot_datas[i].quantity = quantity
+			# Fetch item directly from runtime ItemDatabase registry!
+			var base_item = ItemRegistry.get_item(item_id) if ItemRegistry else null
+			if base_item:
+				var new_slot = SlotData.new()
+				new_slot.item = base_item
+				new_slot.quantity = quantity
+				new_slot.current_durability = durability
+				inventory.slot_datas[i] = new_slot
 
 	inventory.inventory_updated.emit(inventory)
 	print("Inventory loaded successfully from: ", file_path)

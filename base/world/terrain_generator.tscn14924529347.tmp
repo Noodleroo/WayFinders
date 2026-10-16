@@ -1,0 +1,341 @@
+[gd_scene format=3 uid="uid://cathu1c3g3lk0"]
+
+[ext_resource type="PackedScene" uid="uid://cuf2a3m2bpuwg" path="res://wayfinders/base/player/player.tscn" id="2_n7aif"]
+[ext_resource type="PackedScene" uid="uid://bta2olfiyoefk" path="res://wayfinders/base/world/choppable_block.tscn" id="2_ywllg"]
+[ext_resource type="Script" uid="uid://cnoeod6px3cd" path="res://wayfinders/base/world/RiverGenerator.gd" id="3_rku0s"]
+[ext_resource type="Shader" uid="uid://uhp208swgxkj" path="res://wayfinders/base/world/RiverWater.gdshader" id="4_kegxq"]
+
+[sub_resource type="GDScript" id="GDScript_rku0s"]
+script/source = "class_name TerrainGenerator
+extends Node3D
+
+@export_category(\"Terrain Settings\")
+@export var width: int = 128
+@export var depth: int = 128
+@export var grid_step: float = 1.0
+@export var height_scale: float = 25.0
+@export var terrain_seed: int = 0
+@export var use_random_seed: bool = true
+
+@export_category(\"Noise Configuration\")
+@export var noise: FastNoiseLite
+
+@export_category(\"River Settings\")
+@export var river_radius: float = 8.0
+@export var river_depth: float = 4.0
+@export var bank_smoothness: float = 2.0
+
+@export_category(\"Actions\")
+@export var generate_terrain_button: bool = false:
+	set(val):
+		generate_terrain()
+
+@export_category(\"Optimization\")
+@export var collision_step: float = 2.0
+
+@onready var mesh_instance: MeshInstance3D = $TerrainMesh
+@onready var river_path: Path3D = $RiverPath
+
+@export_category(\"Procedural Scenery\")
+@export var choppable_box_scene: PackedScene
+@export var scenery_density: float = 0.05 # Probability of spawning an object per grid point
+@export var scenery_container: Node3D
+
+const TERRAIN_COLLISION_MASK: int = 2
+
+func _ready() -> void:
+	# Configure noise with random seed and jagged fractal settings
+	if not noise:
+		noise = FastNoiseLite.new()
+	
+	noise.seed = randi()
+	noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	
+	# LOWER FREQUENCY = Wider, smoother hill curves (less spikey)
+	noise.frequency = 0.008 
+	
+	# FBM = Natural rolling terrain (RIDGED causes the sharp pufferfish needles)
+	noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+	noise.fractal_octaves = 4
+	noise.fractal_gain = 0.3 # Lower gain reduces sharp micro-peaksness
+	
+	if river_path.curve == null or river_path.curve.point_count == 0:
+		setup_default_river_path()
+		
+	generate_terrain()
+
+func setup_default_river_path() -> void:
+	var curve = Curve3D.new()
+	
+	# Start point (Inland / Mountain)
+	var start_pos = Vector3(width * 0.15, 0, depth * 0.15)
+	# End point (Coast / Ocean)
+	var end_pos = Vector3(width * 0.85, 0, depth * 0.85)
+	
+	# 1. Add fixed starting point
+	curve.add_point(start_pos)
+	
+	# 2. Add 2-3 randomized midpoint bends to create winding curves
+	var num_midpoints = 3
+	for i in range(1, num_midpoints + 1):
+		var t = float(i) / float(num_midpoints + 1)
+		
+		# Linear interpolation from start to end
+		var base_point = start_pos.lerp(end_pos, t)
+		
+		# Add horizontal random meander offset (X and Z only)
+		var offset_x = randf_range(-15.0, 15.0)
+		var offset_z = randf_range(-15.0, 15.0)
+		var mid_point = base_point + Vector3(offset_x, 0, offset_z)
+		
+		# Add Bezier Handles (in_vector and out_vector) to smooth out the river bends
+		var handle_in = Vector3(-10, 0, -10)
+		var handle_out = Vector3(10, 0, 10)
+		
+		curve.add_point(mid_point, handle_in, handle_out)
+		
+	# 3. Add fixed endpoint
+	curve.add_point(end_pos)
+	
+	# Assign the procedural curve to the Path3D node
+	river_path.curve = curve
+
+func generate_terrain() -> void:
+	if mesh_instance == null or river_path == null:
+		return
+
+	# Randomize/Update the river curve every time terrain is generated
+	setup_default_river_path()
+
+	# Bake the newly updated curve points
+	var baked_points = river_path.curve.get_baked_points()
+
+	# 1. Build Visual Mesh
+	var visual_mesh = build_terrain_mesh(grid_step, baked_points)
+	mesh_instance.mesh = visual_mesh
+
+	# 2. Build Low-Res Collision Mesh
+	var collision_mesh = build_terrain_mesh(collision_step, baked_points)
+	update_collision(collision_mesh)
+	_generate_scenery()
+
+func build_terrain_mesh(step_size: float, baked_points: PackedVector3Array) -> ArrayMesh:
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	# Step through the grid using the designated step_size
+	var x_steps = int((width * grid_step) / step_size)
+	var z_steps = int((depth * grid_step) / step_size)
+
+	for x in range(x_steps):
+		for z in range(z_steps):
+			var x0 = x * step_size
+			var z0 = z * step_size
+			var x1 = (x + 1) * step_size
+			var z1 = (z + 1) * step_size
+
+			var h00 = get_carved_height(x0, z0, baked_points)
+			var h10 = get_carved_height(x1, z0, baked_points)
+			var h01 = get_carved_height(x0, z1, baked_points)
+			var h11 = get_carved_height(x1, z1, baked_points)
+
+			var p00 = Vector3(x0, h00, z0)
+			var p10 = Vector3(x1, h10, z0)
+			var p01 = Vector3(x0, h01, z1)
+			var p11 = Vector3(x1, h11, z1)
+
+			st.add_vertex(p00)
+			st.add_vertex(p10)
+			st.add_vertex(p01)
+
+			st.add_vertex(p10)
+			st.add_vertex(p11)
+			st.add_vertex(p01)
+
+	st.generate_normals()
+	return st.commit()
+
+
+func update_collision(collision_mesh: ArrayMesh) -> void:
+	# Clear out previous collision nodes
+	for child in mesh_instance.get_children():
+		if child is StaticBody3D:
+			child.queue_free()
+
+	if collision_mesh == null:
+		return
+
+	var static_body = StaticBody3D.new()
+	var collision_shape = CollisionShape3D.new()
+	
+	# Uses the lower-resolution collision_mesh faces
+	collision_shape.shape = collision_mesh.create_trimesh_shape()
+	
+	static_body.add_child(collision_shape)
+	mesh_instance.add_child(static_body)
+
+func get_carved_height(x: float, z: float, baked_points: PackedVector3Array) -> float:
+	var base_height = noise.get_noise_2d(x, z) * height_scale
+	
+	# Find minimum distance from (x, z) point to nearest segment on Path3D river curve
+	var min_dist_sq = INF
+	var flat_pos = Vector2(x, z)
+
+	for point in baked_points:
+		var point_2d = Vector2(point.x, point.z)
+		var dist_sq = flat_pos.distance_squared_to(point_2d)
+		if dist_sq < min_dist_sq:
+			min_dist_sq = dist_sq
+
+	var distance = sqrt(min_dist_sq)
+
+	# Carve riverbed if point is inside river radius
+	if distance < river_radius:
+		# Smooth step factor creates sloped riverbanks
+		var factor = smoothstep(0.0, river_radius, distance)
+		var carved_height = lerp(-river_depth, base_height, factor)
+		return min(base_height, carved_height)
+
+	return base_height
+
+func _generate_scenery() -> void:
+	if choppable_box_scene == null:
+		print(\"[Terrain] No scenery PackedScene assigned!\")
+		return
+
+	# Ensure container node exists to keep scene tree organized
+	if scenery_container == null:
+		scenery_container = Node3D.new()
+		scenery_container.name = \"SceneryContainer\"
+		add_child(scenery_container)
+
+	# Clear previous scenery instances
+	for child in scenery_container.get_children():
+		child.queue_free()
+
+	# Grid-based random placement
+	var step_size := 2.0
+	var x_steps := int(width / step_size)
+	var z_steps := int(depth / step_size)
+
+	for x in range(-x_steps / 2, x_steps / 2):
+		for z in range(-z_steps / 2, z_steps / 2):
+			# Roll against density threshold
+			if randf() < scenery_density:
+				var world_x := x * step_size + randf_range(-0.5, 0.5)
+				var world_z := z * step_size + randf_range(-0.5, 0.5)
+				
+				# Get surface height at position
+				var world_y := _get_terrain_height_at(world_x, world_z)
+
+				# Spawn scenery object
+				_spawn_scenery_object(world_x, world_y)
+
+func _spawn_scenery_object(x: float, z: float) -> void:
+	var surface_y := _get_terrain_surface_y(x, z)
+	var spawn_position := Vector3(x, surface_y, z)
+
+	var instance = choppable_box_scene.instantiate() as Node3D
+	if instance == null:
+		return
+
+	scenery_container.add_child(instance)
+	instance.global_position = spawn_position
+	instance.rotation.y = randf_range(0.0, TAU)
+
+func _get_terrain_height_at(x: float, z: float) -> float:
+	var space_state := get_world_3d().direct_space_state
+
+	# Cast a ray from high above the terrain straight down
+	var ray_start := Vector3(x, 500.0, z)
+	var ray_end := Vector3(x, -500.0, z)
+
+	var query := PhysicsRayQueryParameters3D.create(ray_start, ray_end)
+	query.collision_mask = TERRAIN_COLLISION_MASK
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+
+	var result := space_state.intersect_ray(query)
+
+	if result:
+		return result.position.y
+
+	# Default baseline Y height if ray misses terrain
+	return 0.0
+	
+func _get_terrain_surface_y(x: float, z: float) -> float:
+	var space_state := get_world_3d().direct_space_state
+	
+	# Start ray high above the map and shoot straight down
+	var ray_start := Vector3(x, 200.0, z)
+	var ray_end := Vector3(x, -200.0, z)
+
+	var query := PhysicsRayQueryParameters3D.create(ray_start, ray_end)
+	
+	# Set collision mask to ONLY detect Layer 2 (Terrain)
+	query.collision_mask = TERRAIN_COLLISION_MASK
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+
+	var result := space_state.intersect_ray(query)
+
+	if result:
+		return result.position.y
+
+	# Fallback height if ray hits nothing
+	return 0.0
+"
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_wc7r7"]
+noise_type = 3
+seed = -784677887
+frequency = 0.015
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_7468f"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_y7rda"]
+sky_material = SubResource("ProceduralSkyMaterial_7468f")
+
+[sub_resource type="Environment" id="Environment_vg2ls"]
+background_mode = 2
+sky = SubResource("Sky_y7rda")
+glow_enabled = true
+
+[sub_resource type="Curve3D" id="Curve3D_i3pqv"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rku0s"]
+render_priority = 0
+shader = ExtResource("4_kegxq")
+shader_parameter/water_color = Color(0.1, 0.4, 0.6, 0.8)
+shader_parameter/flow_direction = Vector2(0, -1)
+shader_parameter/flow_speed = 0.5
+
+[node name="TerrainGenerator" type="Node3D" unique_id=2072600484 node_paths=PackedStringArray("scenery_container")]
+script = SubResource("GDScript_rku0s")
+noise = SubResource("FastNoiseLite_wc7r7")
+generate_terrain_button = true
+choppable_box_scene = ExtResource("2_ywllg")
+scenery_density = 0.02
+scenery_container = NodePath("ProdceduralGen")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1674460695]
+environment = SubResource("Environment_vg2ls")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=262715354]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="TerrainMesh" type="MeshInstance3D" parent="." unique_id=2012809545]
+layers = 2
+
+[node name="ProdceduralGen" type="Node3D" parent="." unique_id=179886772]
+
+[node name="RiverPath" type="Path3D" parent="." unique_id=29437344]
+curve = SubResource("Curve3D_i3pqv")
+script = ExtResource("3_rku0s")
+water_material = SubResource("ShaderMaterial_rku0s")
+
+[node name="Player" parent="." unique_id=1574273862 instance=ExtResource("2_n7aif")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 82.92441, 28.132557, 39.867)

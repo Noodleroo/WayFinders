@@ -26,21 +26,16 @@ func make_current() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# 1. Handle Scroll Wheel (Shift + Scroll = Cycle Hotbar | Normal Scroll = Zoom)
-	if event is InputEventMouseButton and event.is_pressed():
-		if Input.is_key_pressed(KEY_SHIFT):
-			if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-				hotbar_cycle_requested.emit(-1)
-			elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				hotbar_cycle_requested.emit(1)
-		else:
-			if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-				zoom = clamp(zoom - zoom_speed, min_zoom, max_zoom)
-			elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				zoom = clamp(zoom + zoom_speed, min_zoom, max_zoom)
+	if event is InputEventWithModifiers and event.alt_pressed:
+			return
+	if Input.is_action_pressed("zoom_in"):
+		zoom = clamp(zoom - zoom_speed, min_zoom, max_zoom)
+	elif Input.is_action_pressed("zoom_out"):
+		zoom = clamp(zoom + zoom_speed, min_zoom, max_zoom)
 
 	# 2. Handle Mouse Looking (Unified single pass)
 	if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+
 		# Rotate entire rig around Y axis (Yaw)
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		
