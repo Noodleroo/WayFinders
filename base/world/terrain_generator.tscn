@@ -5,7 +5,9 @@
 [ext_resource type="Shader" uid="uid://uhp208swgxkj" path="res://wayfinders/base/world/RiverWater.gdshader" id="4_kegxq"]
 [ext_resource type="PackedScene" uid="uid://b2xe2d4ceoor1" path="res://resources/wayfinders/entities/animals/passive/frog/frog.tscn" id="4_rku0s"]
 [ext_resource type="Script" uid="uid://b8p2golmrwrns" path="res://wayfinders/base/world/HarvestableNode.gd" id="5_kegxq"]
-[ext_resource type="PackedScene" uid="uid://f83jspjbw58x" path="res://resources/wayfinders/items/mushroom_red/MushroomPickup.tscn" id="6_trrmv"]
+[ext_resource type="PackedScene" uid="uid://c78nbg6kph1lw" path="res://resources/wayfinders/items/mushroom_red/mushroom_clump.tscn" id="6_tjf41"]
+[ext_resource type="PackedScene" uid="uid://f83jspjbw58x" path="res://wayfinders/base/data/item/ItemPickup.tscn" id="6_trrmv"]
+[ext_resource type="Resource" uid="uid://cuogvx5ofvaq5" path="res://resources/wayfinders/items/mushroom_red/mushroom_red.tres" id="7_2i6rm"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_7468f"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -21,6 +23,8 @@ glow_enabled = true
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kegxq"]
 vertex_color_use_as_albedo = true
+
+[sub_resource type="PlaceholderMesh" id="PlaceholderMesh_nfn8d"]
 
 [sub_resource type="Curve3D" id="Curve3D_i3pqv"]
 
@@ -49,6 +53,21 @@ data = PackedVector3Array(-3.5, 3.5, 3.5, 3.5, 3.5, 3.5, -3.5, -3.5, 3.5, 3.5, 3
 
 [node name="TerrainGenerator" type="Node3D" unique_id=2072600484]
 
+[node name="ItemPickup" parent="." unique_id=1407797730 instance=ExtResource("6_trrmv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 21.519161, -3.696069)
+item_data = ExtResource("7_2i6rm")
+pickup_quantity = 1
+
+[node name="ItemPickup2" parent="." unique_id=1125474742 instance=ExtResource("6_trrmv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5054219, 21.519161, -3.696069)
+item_data = ExtResource("7_2i6rm")
+pickup_quantity = 1
+
+[node name="ItemPickup3" parent="." unique_id=635989639 instance=ExtResource("6_trrmv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.29153454, 21.519161, -4.164177)
+item_data = ExtResource("7_2i6rm")
+pickup_quantity = 1
+
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1674460695]
 environment = SubResource("Environment_vg2ls")
 
@@ -60,6 +79,7 @@ shadow_enabled = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 layers = 2
 material_override = SubResource("StandardMaterial3D_kegxq")
+mesh = SubResource("PlaceholderMesh_nfn8d")
 
 [node name="ProdceduralGen" type="Node3D" parent="." unique_id=179886772]
 
@@ -70,19 +90,20 @@ water_material = SubResource("ShaderMaterial_rku0s")
 
 [node name="Player" parent="." unique_id=1574273862 instance=ExtResource("2_n7aif")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06349945, 26.208319, -0.29943848)
+inventory_data = null
 
 [node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=1411290858]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D" unique_id=1600573237]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.008, 21, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.041886702, 21.021717, -0.17162323)
 mesh = SubResource("BoxMesh_0dn5q")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=344762438]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 21, 0)
 shape = SubResource("BoxShape3D_fa6ko")
 
-[node name="Frog" parent="." unique_id=675473416 instance=ExtResource("4_rku0s")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.41658, 21.631565, -7.2612343)
+[node name="MushroomClump" parent="." unique_id=1421644077 instance=ExtResource("6_tjf41")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.998242, 21.541052, -3.2239938)
 
 [node name="StaticBody3D2" type="StaticBody3D" parent="." unique_id=1531756012]
 transform = Transform3D(0.79778165, 0, -0.60294646, 0, 1, 0, 0.60294646, 0, 0.79778165, 12.437838, 24.958029, -16.229265)
@@ -94,5 +115,5 @@ mesh = SubResource("BoxMesh_fa6ko")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D2" unique_id=763639966]
 shape = SubResource("ConcavePolygonShape3D_trrmv")
 
-[node name="MushroomPickup" parent="." unique_id=1407797730 instance=ExtResource("6_trrmv")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 21.575272, -7)
+[node name="Frog" parent="." unique_id=675473416 instance=ExtResource("4_rku0s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.41658, 21.631565, -7.2612343)

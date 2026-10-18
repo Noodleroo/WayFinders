@@ -7,7 +7,7 @@ var current_interactable: Interactable = null
 
 func _ready() -> void:
 	enabled = true
-	collide_with_areas = true
+	collide_with_areas = false
 	collide_with_bodies = true
 	target_position = Vector3(0, 0, -4.0)
 	

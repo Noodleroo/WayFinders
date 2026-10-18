@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://f83jspjbw58x"]
+
+[ext_resource type="Script" uid="uid://dyy7hjclimiy3" path="res://wayfinders/base/data/item/ItemPickup.gd" id="1_glxn0"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_2i6rm"]
+height = 0.5003662
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_0dn5q"]
+radius = 0.7
+
+[node name="ItemPickup" type="Area3D" unique_id=1407797730]
+collision_layer = 5
+collision_mask = 0
+script = ExtResource("1_glxn0")
+prompt_message = "Empty Item"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=899061016]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2399292, 0)
+mesh = SubResource("CylinderMesh_2i6rm")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1923595598]
+shape = SubResource("SphereShape3D_0dn5q")
+debug_color = Color(0.81654644, 0.40524748, 0.08168089, 0.41960785)

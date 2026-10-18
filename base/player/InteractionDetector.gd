@@ -1,4 +1,4 @@
-class_name PlayerInteractor
+class_name InteractionDetector
 extends RayCast3D
 
 ## Emitted when hovering over an interactable object (useful for UI prompts)

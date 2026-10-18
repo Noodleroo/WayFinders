@@ -63,9 +63,18 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="QuantityLabel" type="Label" parent="." unique_id=2084315228]
+custom_minimum_size = Vector2(25, 25)
+custom_maximum_size = Vector2(25, 25)
 layout_mode = 2
+size_flags_horizontal = 4
+offset_transform_enabled = true
+offset_transform_position = Vector2(22, 22)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/shadow_outline_size = 2
 horizontal_alignment = 1
-vertical_alignment = 2
+vertical_alignment = 1
 
 [node name="PinIndicator" type="TextureRect" parent="." unique_id=183845316]
 custom_minimum_size = Vector2(10, 0)

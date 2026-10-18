@@ -1,8 +1,7 @@
-# res://scripts/inventory/slot_data.gd
 class_name SlotData
 extends Resource
 
-@export var item: Item # Reference to the new base Item class
+@export var item: Item
 @export var quantity: int = 1: set = set_quantity
 
 # Tracks instance-specific state (e.g., remaining durability)

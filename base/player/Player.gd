@@ -11,6 +11,10 @@ extends CharacterBody3D
 
 @export var hotbar_ui_scene: PackedScene = preload("res://wayfinders/base/player/ui/pinned_hotbar_ui.tscn")
 @export var inventory_ui_scene: PackedScene
+@export var inventory_data: InventoryData
+
+@export var fist_damage: float = 4.0
+@export var fist_reach: float = 2.0
 
 var inventory_ui: InventoryUI
 var hotbar_ui: PinnedHotbarUI
@@ -96,11 +100,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			var slot = inventory.slot_datas[target_slot_index]
 			_update_held_item_mesh(slot)
 
-	if event.is_action_pressed("primary_action"):
-		var pinned_item = inventory.get_item_in_slot(active_pin_index)
-		if pinned_item != null:
-			print("Using primary action with ", inventory.get_item_name(active_pin_index))
-		else: print("Using primary action with Fists")
+	if event.is_action_pressed(&"primary_action"):
 		use_pinned_item(active_pin_index)
 		get_viewport().set_input_as_handled()
 
@@ -132,14 +132,21 @@ func cycle_hotbar_slot(direction: int) -> void:
 	active_pin_index = posmod(active_pin_index + direction, max_pins)
 	select_hotbar_slot(active_pin_index)
 
-func use_pinned_item(pin_slot_index: int) -> void:
-	if inventory and pin_slot_index < inventory.pinned_indices.size():
-		var actual_slot_index = inventory.pinned_indices[pin_slot_index]
-		if actual_slot_index >= 0 and actual_slot_index < inventory.slot_datas.size():
-			var slot = inventory.slot_datas[actual_slot_index]
-			if slot and slot.item:
-				var target_info = {}
-				slot.item.use_primary(self, target_info)
+func use_pinned_item(pin_index: int) -> void:
+	if inventory == null:
+		_perform_fist_attack()
+		return
+
+	# 1. Get real slot index from hotbar pin mapping
+	var slot_index: int = inventory.pinned_indices[pin_index]
+	var current_item: Item = inventory.get_item_in_slot(slot_index)
+
+	# 2. Check if the item is fists OR a basic resource item (e.g. Mushroom, Wood)
+	if current_item == null or current_item.id == "fists" or current_item.item_type == Item.ItemType.BASIC:
+		_perform_fist_attack()
+	else:
+		# Weapons, Tools, Consumables execute their custom primary action
+		current_item.use_primary(self, {})
 
 func use_active_tool_or_weapon() -> void:
 	if inventory == null or active_pin_index >= inventory.pinned_indices.size():
@@ -289,3 +296,32 @@ func _update_held_item_mesh(slot: SlotData) -> void:
 
 	active_item_mesh.mesh = null
 	active_item_mesh.visible = false
+
+## Called when player triggers an attack input
+func attack() -> void:
+	var current_item = inventory.get_item_in_slot(inventory.pinned_indices[active_pin_index])
+	
+	if current_item is Item:
+		# Player is holding a real weapon or tool resource
+		current_item.use_primary(self, {})
+	elif current_item == "Fists":
+		# Player has an empty slot active, perform fist attack
+		_perform_fist_attack()
+
+func _perform_fist_attack() -> void:
+	print("Punching with bare fists!")
+	
+	if interaction_ray and interaction_ray.is_colliding():
+		var target: Node = interaction_ray.get_collider()
+		
+		# Traverse up the tree to find the root node containing take_damage()
+		while target and not target.has_method(&"take_damage") and target.get_parent():
+			target = target.get_parent()
+
+		if target and target.has_method(&"take_damage"):
+			target.take_damage(fist_damage)
+			print("Punched %s for %.1f damage!" % [target.name, fist_damage])
+		else:
+			print("Raycast hit %s, but no take_damage method was found on it or its parents." % interaction_ray.get_collider().name)
+	else:
+		print("Punch missed! Nothing in raycast range.")
